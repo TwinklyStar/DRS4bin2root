@@ -18,7 +18,7 @@ make
 ```
 If there is no error, an executable file `DRS4bin2root` should appear.
 ## Demo
-### Convert CSV to ROOT
+### Convert dat to ROOT
 ```
 ./DRS4bin2root demo/7ch_example.dat
 ```
