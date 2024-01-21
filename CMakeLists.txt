@@ -1,7 +1,7 @@
 #---------------------------------------------------------------------------
 # Setup the project
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
-project(bin2root_v2)
+project(DRS4bin2root)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -24,9 +24,9 @@ include_directories(./)
 
 file(GLOB files ./read_v5.3.cpp)
 
-add_executable(bin2root_v2 ${files})
+add_executable(DRS4bin2root ${files})
 
 #----------------------------------------------------------------------------
 # Install the executable to the directory of CMAKE_INSTALL_PREFIX
 #
-install(TARGETS bin2root_v2 DESTINATION)
+install(TARGETS DRS4bin2root DESTINATION)
