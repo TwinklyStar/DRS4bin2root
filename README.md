@@ -24,7 +24,7 @@ If there is no error, an executable file `DRS4bin2root` should appear.
 ```
 The output tree will contain:  
 1. nevent: event number
-2. EvtTime: a C++ struct storing the time when this event was acuqired  
+2. EvtTime: a C++ struct storing the time when this event was acuqired
 3. ChA1: a C++ struct storing the information of Channel A in the first DRS4 board
 
 You can use `TBrowser` to check the structure and channel number of your file.
