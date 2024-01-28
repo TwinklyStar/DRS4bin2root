@@ -59,46 +59,10 @@
 
 using namespace std;
 
-// 整型数据存储结构 
-struct Data_t_int {
-	int channel_number;
-	int* ch;
-};
-
-// 单精度浮点数存储结构 
-struct Data_t_float {
-	int channel_number;
-	float* ch;
-};
-
-// 双精度浮点数存储解构
-struct Data_t_double {
-	int channel_number;
-	double* ch;
-};
 
 int verbose = 0;
-int channel_total_num = 2;
-const int kMaxChannels = 16; // 你的最大通道数量，根据实际情况调整
 
-//TSpectrum *s1 = new TSpectrum();
-void loader(int rate)
-{
-    char proc[22];
-    memset(proc, '\0', sizeof(proc));
-
-    for (int i = 0; i < rate/5; i++)
-    {
-        proc[i] = '#';
-    }
-
-    printf("\r[%-20s] [%d%%]", proc, rate);
-    fflush(stdout);
-}
-
-struct channel_info{
-    Double_t Time[1024] = {0};
-    Double_t Voltage[1024] = {0};
+struct channel_stat{
     Double_t max_v;
     Double_t max_t;
     Double_t min_v;
@@ -165,9 +129,12 @@ int main (int argc, char **argv){
     clock_t start = clock();
     time_t realtime;
 
-    channel_info ch_manager[8];     // Maximum 8 channels, i.e. 2 boards in chain;
+    channel_stat chstat_manager[8];     // Maximum 8 channels, i.e. 2 boards in chain;
+    std::vector<Double_t> chT_manager[8];     // Maximum 8 channels, i.e. 2 boards in chain;
+    std::vector<Double_t> chV_manager[8];     // Maximum 8 channels, i.e. 2 boards in chain;
     time_info time_manager;
-    Long64_t nevent = 0;
+    UInt_t nevent = 0;
+    Int_t  data_length = 1024;
 
     cout << ">> Start reading file" << argv[1] << " ......" << endl;
     cout << endl;
@@ -175,8 +142,9 @@ int main (int argc, char **argv){
     TFile *treefile = new TFile ((char *) filename.c_str(), "recreate");
     cout << ">> Creating rootfile " << filename << " ......" << endl;
     cout << endl;
-    TTree *tree = new TTree ("T", "An example of ROOT tree with a few branches");
-    tree->Branch ("nevent", &nevent, "event_number/L");
+    TTree *tree = new TTree ("wfm", "A tree storing waveform data from DRS4");
+    tree->Branch ("EvtNum", &nevent, "EvtNum/i");
+    tree->Branch("Data_Length", &data_length, "Data_Length/I");
     tree->Branch("EvtTime", &time_manager, "year/S:month/S:day/S:hour/S:min/S:sec/S:ms/S");
 
     // Read file header
@@ -199,13 +167,6 @@ int main (int argc, char **argv){
     cout<<"Board serial number: "<<BoardSerialNumber << number << endl;
 
 
-    // Waveform of the first 5 events
-    TH1F *hist_event1[8];
-    TH1F *hist_event2[8];
-    TH1F *hist_event3[8];
-    TH1F *hist_event4[8];
-    TH1F *hist_event5[8];
-
     bool end_of_timeinfo = false;
     int bd_itr=0;   // Board iterator
     std::vector<short> channel_seq; // Channel iterator
@@ -224,27 +185,31 @@ int main (int argc, char **argv){
         if (std::regex_match(ChannelHeader, ch_header_template)) {  // Matching the channel header
             if (strcmp(ChannelHeader, "C001") == 0) {
                 if (bd_itr == 0) {
-                    tree->Branch("ChA1", &ch_manager[0],
-                                 "Time[1024]/D:Voltage[1024]/D:max_v/D:max_t/D:min_v/D:min_t/D:mean/D:RMS/D");
+                    tree->Branch("ChA1_T", &chT_manager[0]);
+                    tree->Branch("ChA1_V", &chV_manager[0]);
+                    tree->Branch("ChA1_stat", &chstat_manager[0],
+                                 "max_v/D:max_t/D:min_v/D:min_t/D:mean/D:RMS/D");
 
                     // Read event times
                     file.read((char *) &EventTime, 4096);
                     Double_t time_last = 0;
                     for (int i = 0; i < 1024; i++) {
-                        ch_manager[0].Time[i] = (Double_t)EventTime[i] + time_last;
-                        time_last = ch_manager[0].Time[i];
+                        chT_manager[0].push_back((Double_t)EventTime[i] + time_last);
+                        time_last = chT_manager[0].back();
                     }
                     channel_seq.push_back(0);
                 } else if (bd_itr == 1) {
-                    tree->Branch("ChA2", &ch_manager[4],
-                                 "Time[1024]/D:Voltage[1024]/D:max_v/D:max_t/D:min_v/D:min_t/D:mean/D:RMS/D");
+                    tree->Branch("ChA2_T", &chT_manager[4]);
+                    tree->Branch("ChA2_V", &chV_manager[4]);
+                    tree->Branch("ChA2_stat", &chstat_manager[4],
+                                 "max_v/D:max_t/D:min_v/D:min_t/D:mean/D:RMS/D");
 
                     // Read event times
                     file.read((char *) &EventTime, 4096);
                     Double_t time_last = 0;
                     for (int i = 0; i < 1024; i++) {
-                        ch_manager[4].Time[i] = (Double_t)EventTime[i] + time_last;
-                        time_last = ch_manager[4].Time[i];
+                        chT_manager[4].push_back((Double_t)EventTime[i] + time_last);
+                        time_last = chT_manager[4].back();
                     }
                     channel_seq.push_back(4);
                 } else {
@@ -254,27 +219,31 @@ int main (int argc, char **argv){
             }
             if (strcmp(ChannelHeader, "C002") == 0) {
                 if (bd_itr == 0) {
-                    tree->Branch("ChB1", &ch_manager[1],
-                                 "Time[1024]/D:Voltage[1024]/D:max_v/D:max_t/D:min_v/D:min_t/D:mean/D:RMS/D");
+                    tree->Branch("ChB1_T", &chT_manager[1]);
+                    tree->Branch("ChB1_V", &chV_manager[1]);
+                    tree->Branch("ChB1_stat", &chstat_manager[1],
+                                 "max_v/D:max_t/D:min_v/D:min_t/D:mean/D:RMS/D");
 
                     // Read event times
                     file.read((char *) &EventTime, 4096);
                     Double_t time_last = 0;
                     for (int i = 0; i < 1024; i++) {
-                        ch_manager[1].Time[i] = (Double_t)EventTime[i] + time_last;
-                        time_last = ch_manager[1].Time[i];
+                        chT_manager[1].push_back((Double_t)EventTime[i] + time_last);
+                        time_last = chT_manager[1].back();
                     }
                     channel_seq.push_back(1);
                 } else if (bd_itr == 1) {
-                    tree->Branch("ChB2", &ch_manager[5],
-                                 "Time[1024]/D:Voltage[1024]/D:max_v/D:max_t/D:min_v/D:min_t/D:mean/D:RMS/D");
+                    tree->Branch("ChB2_T", &chT_manager[5]);
+                    tree->Branch("ChB2_V", &chV_manager[5]);
+                    tree->Branch("ChB2_stat", &chstat_manager[5],
+                                 "max_v/D:max_t/D:min_v/D:min_t/D:mean/D:RMS/D");
 
                     // Read event times
                     file.read((char *) &EventTime, 4096);
                     Double_t time_last = 0;
                     for (int i = 0; i < 1024; i++) {
-                        ch_manager[5].Time[i] = (Double_t)EventTime[i] + time_last;
-                        time_last = ch_manager[5].Time[i];
+                        chT_manager[5].push_back((Double_t)EventTime[i] + time_last);
+                        time_last = chT_manager[5].back();
                     }
                     channel_seq.push_back(5);
                 } else {
@@ -284,27 +253,31 @@ int main (int argc, char **argv){
             }
             if (strcmp(ChannelHeader, "C003") == 0) {
                 if (bd_itr == 0) {
-                    tree->Branch("ChC1", &ch_manager[2],
-                                 "Time[1024]/D:Voltage[1024]/D:max_v/D:max_t/D:min_v/D:min_t/D:mean/D:RMS/D");
+                    tree->Branch("ChC1_T", &chT_manager[2]);
+                    tree->Branch("ChC1_V", &chV_manager[2]);
+                    tree->Branch("ChC1_stat", &chstat_manager[2],
+                                 "max_v/D:max_t/D:min_v/D:min_t/D:mean/D:RMS/D");
 
                     // Read event times
                     file.read((char *) &EventTime, 4096);
                     Double_t time_last = 0;
                     for (int i = 0; i < 1024; i++) {
-                        ch_manager[2].Time[i] = (Double_t)EventTime[i] + time_last;
-                        time_last = ch_manager[2].Time[i];
+                        chT_manager[2].push_back((Double_t)EventTime[i] + time_last);
+                        time_last = chT_manager[2].back();
                     }
                     channel_seq.push_back(2);
                 } else if (bd_itr == 1) {
-                    tree->Branch("ChC2", &ch_manager[6],
-                                 "Time[1024]/D:Voltage[1024]/D:max_v/D:max_t/D:min_v/D:min_t/D:mean/D:RMS/D");
+                    tree->Branch("ChC2_T", &chT_manager[6]);
+                    tree->Branch("ChC2_V", &chV_manager[6]);
+                    tree->Branch("ChC2_stat", &chstat_manager[6],
+                                 "max_v/D:max_t/D:min_v/D:min_t/D:mean/D:RMS/D");
 
                     // Read event times
                     file.read((char *) &EventTime, 4096);
                     Double_t time_last = 0;
                     for (int i = 0; i < 1024; i++) {
-                        ch_manager[6].Time[i] = (Double_t)EventTime[i] + time_last;
-                        time_last = ch_manager[6].Time[i];
+                        chT_manager[6].push_back((Double_t)EventTime[i] + time_last);
+                        time_last = chT_manager[6].back();
                     }
                     channel_seq.push_back(6);
                 } else {
@@ -314,27 +287,31 @@ int main (int argc, char **argv){
             }
             if (strcmp(ChannelHeader, "C004") == 0) {
                 if (bd_itr == 0) {
-                    tree->Branch("ChD1", &ch_manager[3],
-                                 "Time[1024]/D:Voltage[1024]/D:max_v/D:max_t/D:min_v/D:min_t/D:mean/D:RMS/D");
+                    tree->Branch("ChD1_T", &chT_manager[3]);
+                    tree->Branch("ChD1_V", &chV_manager[3]);
+                    tree->Branch("ChD1_stat", &chstat_manager[3],
+                                 "max_v/D:max_t/D:min_v/D:min_t/D:mean/D:RMS/D");
 
                     // Read event times
                     file.read((char *) &EventTime, 4096);
                     Double_t time_last = 0;
                     for (int i = 0; i < 1024; i++) {
-                        ch_manager[3].Time[i] = (Double_t)EventTime[i] + time_last;
-                        time_last = ch_manager[3].Time[i];
+                        chT_manager[3].push_back((Double_t)EventTime[i] + time_last);
+                        time_last = chT_manager[3].back();
                     }
                     channel_seq.push_back(3);
                 } else if (bd_itr == 1) {
-                    tree->Branch("ChD2", &ch_manager[7],
-                                 "Time[1024]/D:Voltage[1024]/D:max_v/D:max_t/D:min_v/D:min_t/D:mean/D:RMS/D");
+                    tree->Branch("ChD2_T", &chT_manager[7]);
+                    tree->Branch("ChD2_V", &chV_manager[7]);
+                    tree->Branch("ChD2_stat", &chstat_manager[7],
+                                 "max_v/D:max_t/D:min_v/D:min_t/D:mean/D:RMS/D");
 
                     // Read event times
                     file.read((char *) &EventTime, 4096);
                     Double_t time_last = 0;
                     for (int i = 0; i < 1024; i++) {
-                        ch_manager[7].Time[i] = (Double_t)EventTime[i] + time_last;
-                        time_last = ch_manager[7].Time[i];
+                        chT_manager[7].push_back((Double_t)EventTime[i] + time_last);
+                        time_last = chT_manager[7].back();
                     }
                     channel_seq.push_back(7);
                 } else {
@@ -413,18 +390,18 @@ int main (int argc, char **argv){
         time_manager.sec = Date[5];
         time_manager.ms = Date[6];
 
-		int LastTime;
-		int CurrentTime;
-        int StartTime;
-
-		// calculate time since last event in milliseconds
-		LastTime = CurrentTime;
-		CurrentTime =
-		Date[3] * 3600000 + Date[4] * 60000 + Date[5] * 1000 + Date[6];
-
-        if (nevent == 0) StartTime = CurrentTime;
-
-		if (verbose >= 1)  cout<<"Current time: "<<CurrentTime<<endl;
+//		int LastTime;
+//		int CurrentTime;
+//        int StartTime;
+//
+//		// calculate time since last event in milliseconds
+//		LastTime = CurrentTime;
+//		CurrentTime =
+//		Date[3] * 3600000 + Date[4] * 60000 + Date[5] * 1000 + Date[6];
+//
+//        if (nevent == 0) StartTime = CurrentTime;
+//
+//		if (verbose >= 1)  cout<<"Current time: "<<CurrentTime<<endl;
 
         // Start channel looping in a single event
         short last_ch_num = -1;
@@ -473,7 +450,7 @@ int main (int argc, char **argv){
 
             // Unit conversion: 0 -> -500, 65535 -> 500
             for (int i=0; i<1024; i++){
-                ch_manager[current_ch_num].Voltage[i] = ChannelData[i] * (1000.0 / 65535.0) + (Date[7] - 500);
+                chV_manager[current_ch_num].push_back(ChannelData[i] * (1000.0 / 65535.0) + (Date[7] - 500));
             }
 
 //            double v_RMS[5];
@@ -486,21 +463,28 @@ int main (int argc, char **argv){
 //            double vmean = TMath::Mean (&ch_manager[current_ch_num-1].Voltage[index_v_RMS * 200], &ch_manager[current_ch_num-1].Voltage[(index_v_RMS + 1) * 200]);	// use mean in that section
 //
             // Find Max and Min of the Channel data (Voltage)
-            int index_min = TMath::LocMin (1024, ch_manager[current_ch_num].Voltage);	// return index of the min
-            ch_manager[current_ch_num].min_v = ch_manager[current_ch_num].Voltage[index_min];	// return value of the vmin
-            ch_manager[current_ch_num].min_t = ch_manager[current_ch_num].Time[index_min];	// return value of the tmin
-            int index_max = TMath::LocMax (1024, ch_manager[current_ch_num].Voltage);	// return index of the max
-            ch_manager[current_ch_num].max_v = ch_manager[current_ch_num].Voltage[index_max];	// return value of the vmin
-            ch_manager[current_ch_num].max_t = ch_manager[current_ch_num].Time[index_max];	// return value of the tmin
+            auto itr_min = TMath::LocMin (chV_manager[current_ch_num].begin(), chV_manager[current_ch_num].end());	// return index of the min
+            chstat_manager[current_ch_num].min_v = *itr_min;	// return value of the vmin
+            int idx_min = std::distance(chV_manager[current_ch_num].begin(), itr_min);
+            chstat_manager[current_ch_num].min_t = chT_manager[current_ch_num].at(idx_min);	// return value of the tmin
+
+            auto itr_max = TMath::LocMax (chV_manager[current_ch_num].begin(), chV_manager[current_ch_num].end());	// return index of the max
+            chstat_manager[current_ch_num].max_v = *itr_max;	// return value of the vmax
+            int idx_max = std::distance(chV_manager[current_ch_num].begin(), itr_max);
+            chstat_manager[current_ch_num].max_t = chT_manager[current_ch_num].at(idx_max);	// return value of the tmax
 
             // Calculate the mean and RMS of each channel
-            ch_manager[current_ch_num].mean = TMath::Mean(1024, &ch_manager[current_ch_num].Voltage[0]);
-            ch_manager[current_ch_num].RMS = TMath::RMS(1024, &ch_manager[current_ch_num].Voltage[0]);
+            chstat_manager[current_ch_num].mean = TMath::Mean(chV_manager[current_ch_num].begin(), chV_manager[current_ch_num].end());
+            chstat_manager[current_ch_num].RMS  = TMath::RMS(chV_manager[current_ch_num].begin(), chV_manager[current_ch_num].end());
 
         }
 
 		tree->Fill();		// fill the tree event by event
         ++nevent;
+        for (auto current_ch_num : channel_seq){
+            chV_manager[current_ch_num].clear();
+            chV_manager[current_ch_num].shrink_to_fit();
+        }
 		if (file.eof()){
 			cout << ">> Reach End of the file .... " << endl;
 			cout << ">> Total event number: " << nevent << endl;
