@@ -187,8 +187,12 @@ int main (int argc, char **argv){
                 if (bd_itr == 0) {
                     tree->Branch("ChA1_T", &chT_manager[0]);
                     tree->Branch("ChA1_V", &chV_manager[0]);
-                    tree->Branch("ChA1_stat", &chstat_manager[0],
-                                 "max_v/D:max_t/D:min_v/D:min_t/D:mean/D:RMS/D");
+                    tree->Branch("ChA1_max_v", &chstat_manager[0].max_v, "ChA1_max_v/D");
+                    tree->Branch("ChA1_max_t", &chstat_manager[0].max_t, "ChA1_max_t/D");
+                    tree->Branch("ChA1_min_v", &chstat_manager[0].min_v, "ChA1_min_v/D");
+                    tree->Branch("ChA1_min_t", &chstat_manager[0].min_t, "ChA1_min_t/D");
+                    tree->Branch("ChA1_mean",  &chstat_manager[0].mean,  "ChA1_mean/D");
+                    tree->Branch("ChA1_RMS",   &chstat_manager[0].RMS,   "ChA1_RMS/D");
 
                     // Read event times
                     file.read((char *) &EventTime, 4096);
@@ -201,8 +205,12 @@ int main (int argc, char **argv){
                 } else if (bd_itr == 1) {
                     tree->Branch("ChA2_T", &chT_manager[4]);
                     tree->Branch("ChA2_V", &chV_manager[4]);
-                    tree->Branch("ChA2_stat", &chstat_manager[4],
-                                 "max_v/D:max_t/D:min_v/D:min_t/D:mean/D:RMS/D");
+                    tree->Branch("ChA2_max_v", &chstat_manager[4].max_v, "ChA2_max_v/D");
+                    tree->Branch("ChA2_max_t", &chstat_manager[4].max_t, "ChA2_max_t/D");
+                    tree->Branch("ChA2_min_v", &chstat_manager[4].min_v, "ChA2_min_v/D");
+                    tree->Branch("ChA2_min_t", &chstat_manager[4].min_t, "ChA2_min_t/D");
+                    tree->Branch("ChA2_mean",  &chstat_manager[4].mean,  "ChA2_mean/D");
+                    tree->Branch("ChA2_RMS",   &chstat_manager[4].RMS,   "ChA2_RMS/D");
 
                     // Read event times
                     file.read((char *) &EventTime, 4096);
@@ -221,8 +229,12 @@ int main (int argc, char **argv){
                 if (bd_itr == 0) {
                     tree->Branch("ChB1_T", &chT_manager[1]);
                     tree->Branch("ChB1_V", &chV_manager[1]);
-                    tree->Branch("ChB1_stat", &chstat_manager[1],
-                                 "max_v/D:max_t/D:min_v/D:min_t/D:mean/D:RMS/D");
+                    tree->Branch("ChB1_max_v", &chstat_manager[1].max_v, "ChB1_max_v/D");
+                    tree->Branch("ChB1_max_t", &chstat_manager[1].max_t, "ChB1_max_t/D");
+                    tree->Branch("ChB1_min_v", &chstat_manager[1].min_v, "ChB1_min_v/D");
+                    tree->Branch("ChB1_min_t", &chstat_manager[1].min_t, "ChB1_min_t/D");
+                    tree->Branch("ChB1_mean",  &chstat_manager[1].mean,  "ChB1_mean/D");
+                    tree->Branch("ChB1_RMS",   &chstat_manager[1].RMS,   "ChB1_RMS/D");
 
                     // Read event times
                     file.read((char *) &EventTime, 4096);
@@ -235,8 +247,12 @@ int main (int argc, char **argv){
                 } else if (bd_itr == 1) {
                     tree->Branch("ChB2_T", &chT_manager[5]);
                     tree->Branch("ChB2_V", &chV_manager[5]);
-                    tree->Branch("ChB2_stat", &chstat_manager[5],
-                                 "max_v/D:max_t/D:min_v/D:min_t/D:mean/D:RMS/D");
+                    tree->Branch("ChB2_max_v", &chstat_manager[5].max_v, "ChB2_max_v/D");
+                    tree->Branch("ChB2_max_t", &chstat_manager[5].max_t, "ChB2_max_t/D");
+                    tree->Branch("ChB2_min_v", &chstat_manager[5].min_v, "ChB2_min_v/D");
+                    tree->Branch("ChB2_min_t", &chstat_manager[5].min_t, "ChB2_min_t/D");
+                    tree->Branch("ChB2_mean",  &chstat_manager[5].mean,  "ChB2_mean/D");
+                    tree->Branch("ChB2_RMS",   &chstat_manager[5].RMS,   "ChB2_RMS/D");
 
                     // Read event times
                     file.read((char *) &EventTime, 4096);
@@ -255,8 +271,12 @@ int main (int argc, char **argv){
                 if (bd_itr == 0) {
                     tree->Branch("ChC1_T", &chT_manager[2]);
                     tree->Branch("ChC1_V", &chV_manager[2]);
-                    tree->Branch("ChC1_stat", &chstat_manager[2],
-                                 "max_v/D:max_t/D:min_v/D:min_t/D:mean/D:RMS/D");
+                    tree->Branch("ChC1_max_v", &chstat_manager[2].max_v, "ChC1_max_v/D");
+                    tree->Branch("ChC1_max_t", &chstat_manager[2].max_t, "ChC1_max_t/D");
+                    tree->Branch("ChC1_min_v", &chstat_manager[2].min_v, "ChC1_min_v/D");
+                    tree->Branch("ChC1_min_t", &chstat_manager[2].min_t, "ChC1_min_t/D");
+                    tree->Branch("ChC1_mean",  &chstat_manager[2].mean,  "ChC1_mean/D");
+                    tree->Branch("ChC1_RMS",   &chstat_manager[2].RMS,   "ChC1_RMS/D");
 
                     // Read event times
                     file.read((char *) &EventTime, 4096);
@@ -269,8 +289,12 @@ int main (int argc, char **argv){
                 } else if (bd_itr == 1) {
                     tree->Branch("ChC2_T", &chT_manager[6]);
                     tree->Branch("ChC2_V", &chV_manager[6]);
-                    tree->Branch("ChC2_stat", &chstat_manager[6],
-                                 "max_v/D:max_t/D:min_v/D:min_t/D:mean/D:RMS/D");
+                    tree->Branch("ChC2_max_v", &chstat_manager[6].max_v, "ChC2_max_v/D");
+                    tree->Branch("ChC2_max_t", &chstat_manager[6].max_t, "ChC2_max_t/D");
+                    tree->Branch("ChC2_min_v", &chstat_manager[6].min_v, "ChC2_min_v/D");
+                    tree->Branch("ChC2_min_t", &chstat_manager[6].min_t, "ChC2_min_t/D");
+                    tree->Branch("ChC2_mean",  &chstat_manager[6].mean,  "ChC2_mean/D");
+                    tree->Branch("ChC2_RMS",   &chstat_manager[6].RMS,   "ChC2_RMS/D");
 
                     // Read event times
                     file.read((char *) &EventTime, 4096);
@@ -289,8 +313,12 @@ int main (int argc, char **argv){
                 if (bd_itr == 0) {
                     tree->Branch("ChD1_T", &chT_manager[3]);
                     tree->Branch("ChD1_V", &chV_manager[3]);
-                    tree->Branch("ChD1_stat", &chstat_manager[3],
-                                 "max_v/D:max_t/D:min_v/D:min_t/D:mean/D:RMS/D");
+                    tree->Branch("ChD1_max_v", &chstat_manager[3].max_v, "ChD1_max_v/D");
+                    tree->Branch("ChD1_max_t", &chstat_manager[3].max_t, "ChD1_max_t/D");
+                    tree->Branch("ChD1_min_v", &chstat_manager[3].min_v, "ChD1_min_v/D");
+                    tree->Branch("ChD1_min_t", &chstat_manager[3].min_t, "ChD1_min_t/D");
+                    tree->Branch("ChD1_mean",  &chstat_manager[3].mean,  "ChD1_mean/D");
+                    tree->Branch("ChD1_RMS",   &chstat_manager[3].RMS,   "ChD1_RMS/D");
 
                     // Read event times
                     file.read((char *) &EventTime, 4096);
@@ -303,8 +331,12 @@ int main (int argc, char **argv){
                 } else if (bd_itr == 1) {
                     tree->Branch("ChD2_T", &chT_manager[7]);
                     tree->Branch("ChD2_V", &chV_manager[7]);
-                    tree->Branch("ChD2_stat", &chstat_manager[7],
-                                 "max_v/D:max_t/D:min_v/D:min_t/D:mean/D:RMS/D");
+                    tree->Branch("ChD2_max_v", &chstat_manager[7].max_v, "ChD2_max_v/D");
+                    tree->Branch("ChD2_max_t", &chstat_manager[7].max_t, "ChD2_max_t/D");
+                    tree->Branch("ChD2_min_v", &chstat_manager[7].min_v, "ChD2_min_v/D");
+                    tree->Branch("ChD2_min_t", &chstat_manager[7].min_t, "ChD2_min_t/D");
+                    tree->Branch("ChD2_mean",  &chstat_manager[7].mean,  "ChD2_mean/D");
+                    tree->Branch("ChD2_RMS",   &chstat_manager[7].RMS,   "ChD2_RMS/D");
 
                     // Read event times
                     file.read((char *) &EventTime, 4096);

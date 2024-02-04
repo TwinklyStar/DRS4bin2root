@@ -46,6 +46,32 @@ To use it to your own data:
 root -l -q 'simpAna.C("/path/to/your/data")'
 ```
 
+### ChannelReader Class
+The demo analysis program utilizes the `ChannelReader` class to read data from pico and DRS4 and read in the channel data
+as class members, which can largely simplify the analysis program. You can also include it for your own analysis program.  
+When creating an instance of this class, you should give a channel name as input parameter:
+```
+ChannelReader myReader("ChA1");     // this reader will read data from ChA1
+```
+The constructor will automatically execute `SetBranchAddress` according to its channel name.  
+For a closed channel or invalid channel name, you can still create a reader for it,
+but `myReader.GetStatus()` will return false.
+
+The class has following members and function:
+```
+ std::vector<Double_t> *T;    // Pointer to the time vector
+ std::vector<Double_t> *V;    // Pointer to the voltage vector
+ Double_t max_v;
+ Double_t max_t;
+ Double_t min_v;
+ Double_t min_t;
+ Double_t mean;
+ Double_t RMS;
+ 
+ bool GetStatus()             // Returns true if channel is open
+ TString GetName()            // Returns channel name, e.g., ChA1 
+```
+
 ### File structure
 The output root file structure in tree `wfm` is as follows:
 <div align=center><img src="figure/roottree.png" height="400"></div>
@@ -69,13 +95,13 @@ EvtTime:  // Capture time of each event (pico ver. does't have this branch)
 
 ChA(/B/C/D)1(/2)_T: *std::vector<Double_t>  // Time (ns for DRS4, ns-ms for picoScope)
 ChA(/B/C/D)1(/2)_V: *std::vector<Double_t>  // Voltage (mV for DRS4, mV-V for picoScope)
+// Due to flexible unit and offset in picoScope, again, please save a .pssetting file for each DAQ setting
 
-ChA(/B/C/D)1(/2)_stat:  // Some simple statistics of each waveform
-   max_v: Double_t  // Maximum voltage
-   max_t: Double_t  // Time where the maximum voltage locates
-   min_v: Double_t  // You know what it means
-   min_t: Double_t  // You know what it means
-   mean:  Double_t  // mean of the voltage vector
-   RMS:   Double_t  // RMS of the voltage vector
+ChA(/B/C/D)1(/2)_max_v: Double_t  // Maximum voltage
+ChA(/B/C/D)1(/2)_max_t: Double_t  // Time where the maximum voltage locates
+ChA(/B/C/D)1(/2)_min_v: Double_t  // You know what it means
+ChA(/B/C/D)1(/2)_min_t: Double_t  // You know what it means
+ChA(/B/C/D)1(/2)_mean:  Double_t  // mean of the voltage vector
+ChA(/B/C/D)1(/2)_RMS:   Double_t  // RMS of the voltage vector
 ```
 
