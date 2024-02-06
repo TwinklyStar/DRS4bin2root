@@ -1,3 +1,10 @@
+#include "ChannelReader.h"
+#include "TCanvas.h"
+#include "TGraph.h"
+#include "TMultiGraph.h"
+#include "TLegend.h"
+#include "TH1F.h"
+
 void drawWaveform(Int_t evt_num=0){
     Double_t offset = 0;  // The offset of 4 channels (set in picoscope software)
     TString fpath = "../../demo/7ch_example.root";
@@ -5,41 +12,12 @@ void drawWaveform(Int_t evt_num=0){
     TFile* ff = TFile::Open(fpath, "READ");
     TTree* tt = (TTree*) ff->Get("wfm");
 
-	// if the macro has the function name (e.g. drawWaveform), the vector has to be registered in this way (new ...)
-    std::vector<Double_t> *ChA1_T  = new std::vector<Double_t>;
-    std::vector<Double_t> *ChB1_T  = new std::vector<Double_t>;
-    std::vector<Double_t> *ChC1_T  = new std::vector<Double_t>;
-    std::vector<Double_t> *ChD1_T  = new std::vector<Double_t>;
-    std::vector<Double_t> *ChA2_T  = new std::vector<Double_t>;
-    std::vector<Double_t> *ChB2_T  = new std::vector<Double_t>;
-    std::vector<Double_t> *ChC2_T  = new std::vector<Double_t>;
-    std::vector<Double_t> *ChD2_T  = new std::vector<Double_t>;
+    // Initialize ChannelReader Class AFTER reading the tree and BEFORE creating any instance
+    ChannelReader::Initialize(tt);
 
-    std::vector<Double_t> *ChA1_V  = new std::vector<Double_t>;
-    std::vector<Double_t> *ChB1_V  = new std::vector<Double_t>;
-    std::vector<Double_t> *ChC1_V  = new std::vector<Double_t>;
-    std::vector<Double_t> *ChD1_V  = new std::vector<Double_t>;
-    std::vector<Double_t> *ChA2_V  = new std::vector<Double_t>;
-    std::vector<Double_t> *ChB2_V  = new std::vector<Double_t>;
-    std::vector<Double_t> *ChC2_V  = new std::vector<Double_t>;
-    std::vector<Double_t> *ChD2_V  = new std::vector<Double_t>;
-
-    tt->SetBranchAddress("ChA1_T", &ChA1_T);    // Comment unused channels
-    tt->SetBranchAddress("ChB1_T", &ChB1_T);    // Comment unused channels
-    tt->SetBranchAddress("ChC1_T", &ChC1_T);    // Comment unused channels
-//    tt->SetBranchAddress("ChD1_T", &ChD1_T);    // Comment unused channels
-    tt->SetBranchAddress("ChA2_T", &ChA2_T);    // Comment unused channels
-    tt->SetBranchAddress("ChB2_T", &ChB2_T);    // Comment unused channels
-    tt->SetBranchAddress("ChC2_T", &ChC2_T);    // Comment unused channels
-    tt->SetBranchAddress("ChD2_T", &ChD2_T);    // Comment unused channels
-    tt->SetBranchAddress("ChA1_V", &ChA1_V);    // Comment unused channels
-    tt->SetBranchAddress("ChB1_V", &ChB1_V);    // Comment unused channels
-    tt->SetBranchAddress("ChC1_V", &ChC1_V);    // Comment unused channels
-//    tt->SetBranchAddress("ChD1_V", &ChD1_V);    // Comment unused channels
-    tt->SetBranchAddress("ChA2_V", &ChA2_V);    // Comment unused channels
-    tt->SetBranchAddress("ChB2_V", &ChB2_V);    // Comment unused channels
-    tt->SetBranchAddress("ChC2_V", &ChC2_V);    // Comment unused channels
-    tt->SetBranchAddress("ChD2_V", &ChD2_V);    // Comment unused channels
+    // Input parameter is the channel name that determines which channel the reader will read
+    ChannelReader ChA1("ChA1"), ChB1("ChB1"), ChC1("ChC1"), ChD1("ChD1"),
+                  ChA2("ChA2"), ChB2("ChB2"), ChC2("ChC2"), ChD2("ChD2");
 
     tt->GetEntry(evt_num);
 
@@ -54,24 +32,24 @@ void drawWaveform(Int_t evt_num=0){
     auto g7 = new TGraph; g7->SetLineColor(kPink-9);    g7->SetLineWidth(3); g7->SetTitle("Channel D2");
     auto lgd = new TLegend(0.85, 0.70, 0.995, 0.99);
 
-    for (int i=0; i<ChA1_T->size(); i++){
-        g1->SetPoint(i, ChA1_T->at(i), ChA1_V->at(i) - offset + 300);
-        g2->SetPoint(i, ChB1_T->at(i), ChB1_V->at(i) - offset + 200);
-        g3->SetPoint(i, ChC1_T->at(i), ChC1_V->at(i) - offset + 100);
-        g4->SetPoint(i, ChA2_T->at(i), ChA2_V->at(i) - offset);
-        g5->SetPoint(i, ChB2_T->at(i), ChB2_V->at(i) - offset - 100);
-        g6->SetPoint(i, ChC2_T->at(i), ChC2_V->at(i) - offset - 200);
-        g7->SetPoint(i, ChD2_T->at(i), ChD2_V->at(i) - offset - 300);
+    for (int i=0; i<ChA1.T->size(); i++){
+        g1->SetPoint(i, ChA1.T->at(i), ChA1.V->at(i) - offset + 300);
+        g2->SetPoint(i, ChB1.T->at(i), ChB1.V->at(i) - offset + 200);
+        g3->SetPoint(i, ChC1.T->at(i), ChC1.V->at(i) - offset + 100);
+        g4->SetPoint(i, ChA2.T->at(i), ChA2.V->at(i) - offset);
+        g5->SetPoint(i, ChB2.T->at(i), ChB2.V->at(i) - offset - 100);
+        g6->SetPoint(i, ChC2.T->at(i), ChC2.V->at(i) - offset - 200);
+        g7->SetPoint(i, ChD2.T->at(i), ChD2.V->at(i) - offset - 300);
     }
 
     mg->Add(g1); mg->Add(g2); mg->Add(g3); mg->Add(g4); mg->Add(g5); mg->Add(g6); mg->Add(g7);
-    lgd->AddEntry(g1, "Channel A, Offset =  300", "l");
-    lgd->AddEntry(g2, "Channel B, Offset =  200", "l");
-    lgd->AddEntry(g3, "Channel C, Offset =  100", "l");
-    lgd->AddEntry(g4, "Channel D, Offset =    0", "l");
-    lgd->AddEntry(g5, "Channel D, Offset = -100", "l");
-    lgd->AddEntry(g6, "Channel D, Offset = -200", "l");
-    lgd->AddEntry(g7, "Channel D, Offset = -300", "l");
+    lgd->AddEntry(g1, "Channel A1, Offset =  300", "l");
+    lgd->AddEntry(g2, "Channel B1, Offset =  200", "l");
+    lgd->AddEntry(g3, "Channel C1, Offset =  100", "l");
+    lgd->AddEntry(g4, "Channel A2, Offset =    0", "l");
+    lgd->AddEntry(g5, "Channel B2, Offset = -100", "l");
+    lgd->AddEntry(g6, "Channel C2, Offset = -200", "l");
+    lgd->AddEntry(g7, "Channel D2, Offset = -300", "l");
 
     mg->SetTitle(Form("4-Channel Waveforms, Event %d; Time [#mus]; Voltage [mV]", evt_num));
     mg->GetHistogram()->GetXaxis()->SetRangeUser(-100, 1900);
