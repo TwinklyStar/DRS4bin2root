@@ -51,7 +51,7 @@ void drawWaveform(Int_t evt_num=0){
     lgd->AddEntry(g6, "Channel C2, Offset = -200", "l");
     lgd->AddEntry(g7, "Channel D2, Offset = -300", "l");
 
-    mg->SetTitle(Form("4-Channel Waveforms, Event %d; Time [#mus]; Voltage [mV]", evt_num));
+    mg->SetTitle(Form("4-Channel Waveforms, Event %d; Time [ns]; Voltage [mV]", evt_num));
     mg->GetHistogram()->GetXaxis()->SetRangeUser(-100, 1900);
     mg->GetHistogram()->GetYaxis()->SetRangeUser(-550, 320);
     mg->Draw("A");
