@@ -1,4 +1,4 @@
-#include "ChannelReader.h"
+#include "../ChannelReader.h"
 using namespace std;
 
 struct time_info{

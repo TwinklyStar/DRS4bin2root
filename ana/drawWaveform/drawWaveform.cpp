@@ -1,4 +1,4 @@
-#include "ChannelReader.h"
+#include "../ChannelReader.h"
 #include "TCanvas.h"
 #include "TGraph.h"
 #include "TMultiGraph.h"
