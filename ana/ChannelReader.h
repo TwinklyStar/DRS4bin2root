@@ -10,6 +10,8 @@
 #include "TTree.h"
 #include "TFile.h"
 #include "TString.h"
+#include "TH1D.h"
+#include "TGraph.h"
 
 class ChannelReader{
 public:
@@ -41,6 +43,80 @@ public:
 
     bool GetStatus() {return is_open;}
 
+    int GetDataLength() {return data_length;}
+
+    int GetIndexByTime(Double_t target_time) {
+        if (target_time < T->at(0) || target_time > T->back()) return -1;   // Out of boundary
+
+        int idx = 0;
+        while (T->at(idx) < target_time) idx++;
+        return idx-1;
+    }
+
+    Double_t CalculateBaseline(int test_num = 20){
+        baseline = 0;
+        if (test_num > tt->GetEntries()){
+            std::cout << "WARNING: ChannelReader::CalculateBaseline: Event number used to calculate baseline exceeds "
+                      << "total number " << tt->GetEntries() << ". Set number to the total number..." << std::endl;
+            test_num = tt->GetEntries();
+        }
+
+        for (int i=0; i<test_num; i++){
+            tt->GetEntry(i);
+            baseline += GetMostFreqVoltage() / test_num;
+        }
+        return baseline;
+    }
+    Double_t GetBaseline() {return baseline;}
+    Double_t GetCurrentBaseline() {return GetMostFreqVoltage();}
+
+    Double_t CalculateArea(int start_pt, int len, bool recal_baseline = false){  // If the third parameter is true, baseline will be recalculated in every event
+        if (polarity == 0) {
+            std::cerr << "ChannelReader::CalculateArea: Please set polarity use SetPolarity() first!" << std::endl;
+            return 0;
+        }
+        if (baseline == 0 && !recal_baseline) {
+            std::cout << "WARNING: ChannelReader::CalculateArea: Baseline wasn't calculated before calculating area. Set to 0" << std::endl;
+        }
+        if (T->size() == 0) {
+            std::cerr << "ERROR: Please read an entry using tree->GetEntry() first before calculating area!" << std::endl;
+            return 0;
+        }
+        if (start_pt < 0 || len <= 1 || start_pt+len > data_length){
+            std::cerr << "ERROR: Invalid integral region: start_pt=" << start_pt << " len=" << len << "!" << std::endl;
+            return 0;
+        }
+
+        if (recal_baseline){
+            baseline = GetMostFreqVoltage();
+        }
+
+        // First order hold sampling reconstruction
+        Double_t area = 0;
+        for (int i=start_pt+1; i < len; i++){
+            Double_t bin_width = T->at(i) - T->at(i-1);
+            area += polarity * ((V->at(i-1) + V->at(i))/2 - baseline) * bin_width;
+        }
+        return area;
+    }
+
+    void SetPolarity(int p) {
+        if (p != 1 && p != -1){
+            std::cerr << "ChannelReader::SetPolarity: Polarity can only be 1 (positive) or -1 (negative)!" << std::endl;
+            return;
+        }
+        else
+            polarity = p;
+    }
+    int GetPolarity() {return polarity;}
+
+    void PlotWave(TGraph *gg, Double_t offset = 0, int polari = 1){
+        gg->Set(0);     // Clear TGraph
+        for (int i=0; i<data_length; i++){
+            gg->AddPoint(T->at(i), polari * (V->at(i))+offset);
+        }
+    }
+
     explicit ChannelReader(TString ch_name): ch_name(ch_name) {
         TString ch_T    = ch_name+"_T";
         TString ch_V    = ch_name+"_V";
@@ -60,6 +136,9 @@ public:
             min_t = 0;
             mean  = 0;
             RMS   = 0;
+            baseline = 0;
+            data_length = 0;
+            polarity = 0;
         } else{
             if (is_DRS4){
                 T = new std::vector<Double_t>;
@@ -76,6 +155,9 @@ public:
             tt->SetBranchAddress(ch_mint, &min_t);
             tt->SetBranchAddress(ch_mean, &mean);
             tt->SetBranchAddress(ch_RMS,  &RMS);
+
+            tt->GetEntry(0);
+            data_length = T->size();
         }
     }
 
@@ -85,7 +167,20 @@ public:
 private:
     static TTree* tt;
     TString ch_name;
-    bool is_open;
+    bool is_open = false;
+    Double_t baseline = 0;
+    int data_length = 0;
+    int polarity = 0;
+
+    Double_t GetMostFreqVoltage(){
+        TH1D hist_v("hist_v", "hist_v", 200, mean-2*RMS, mean+2*RMS);
+        if (data_length == 0) data_length = T->size();
+        for (int j=0; j<data_length; j++){
+            hist_v.Fill(V->at(j));
+        }
+
+        return hist_v.GetXaxis()->GetBinCenter(hist_v.GetMaximumBin());
+    }
 };
 
 ChannelReader::~ChannelReader()=default;

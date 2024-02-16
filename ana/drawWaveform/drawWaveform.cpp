@@ -32,15 +32,13 @@ void drawWaveform(Int_t evt_num=0){
     auto g7 = new TGraph; g7->SetLineColor(kPink-9);    g7->SetLineWidth(3); g7->SetTitle("Channel D2");
     auto lgd = new TLegend(0.85, 0.70, 0.995, 0.99);
 
-    for (int i=0; i<ChA1.T->size(); i++){
-        g1->SetPoint(i, ChA1.T->at(i), ChA1.V->at(i) - offset + 300);
-        g2->SetPoint(i, ChB1.T->at(i), ChB1.V->at(i) - offset + 200);
-        g3->SetPoint(i, ChC1.T->at(i), ChC1.V->at(i) - offset + 100);
-        g4->SetPoint(i, ChA2.T->at(i), ChA2.V->at(i) - offset);
-        g5->SetPoint(i, ChB2.T->at(i), ChB2.V->at(i) - offset - 100);
-        g6->SetPoint(i, ChC2.T->at(i), ChC2.V->at(i) - offset - 200);
-        g7->SetPoint(i, ChD2.T->at(i), ChD2.V->at(i) - offset - 300);
-    }
+    ChA1.PlotWave(g1, -offset + 300);
+    ChB1.PlotWave(g2, -offset + 200);
+    ChC1.PlotWave(g3, -offset + 100);
+    ChA2.PlotWave(g4, -offset +   0);
+    ChB2.PlotWave(g5, -offset - 100);
+    ChC2.PlotWave(g6, -offset - 300);
+    ChD2.PlotWave(g7, -offset - 300);
 
     mg->Add(g1); mg->Add(g2); mg->Add(g3); mg->Add(g4); mg->Add(g5); mg->Add(g6); mg->Add(g7);
     lgd->AddEntry(g1, "Channel A1, Offset =  300", "l");
