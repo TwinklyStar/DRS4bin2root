@@ -167,7 +167,7 @@ public:
 private:
     static TTree* tt;
     TString ch_name;
-    bool is_open = false;
+    bool is_open = true;
     Double_t baseline = 0;
     int data_length = 0;
     int polarity = 0;
