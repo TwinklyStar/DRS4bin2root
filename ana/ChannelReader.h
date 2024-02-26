@@ -93,7 +93,7 @@ public:
 
         // First order hold sampling reconstruction
         Double_t area = 0;
-        for (int i=start_pt+1; i < len; i++){
+        for (int i=start_pt+1; i < start_pt + len; i++){
             Double_t bin_width = T->at(i) - T->at(i-1);
             area += polarity * ((V->at(i-1) + V->at(i))/2 - baseline) * bin_width;
         }
